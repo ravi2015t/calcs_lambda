@@ -34,11 +34,12 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
     // Return something that implements IntoResponse.
     // It will be serialized to the right response event automatically by the runtime
 
-    let message = format!("Total Time elapased {:?}", end - now);
+    let data = fs::read_to_string("results1.json").expect("Couldn't read results file");
+    // let message = format!("Total Time elapased {:?}", end - now);
     let resp = Response::builder()
         .status(200)
         .header("content-type", "text/html")
-        .body(message.into())
+        .body(data.into())
         .map_err(Box::new)?;
     Ok(resp)
 }
