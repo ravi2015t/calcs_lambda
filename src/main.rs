@@ -34,18 +34,6 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
     // Return something that implements IntoResponse.
     // It will be serialized to the right response event automatically by the runtime
 
-    let entries = fs::read_dir("/tmp/")?;
-    let file_names: Vec<String> = entries
-        .filter_map(|entry| {
-            let path = entry.ok()?.path();
-            if path.is_file() {
-                path.file_name()?.to_str().map(|s| s.to_owned())
-            } else {
-                None
-            }
-        })
-        .collect();
-    tracing::info!("All files in temp folder {:?}", file_names);
     let data = fs::read_to_string("/tmp/results1.json").expect("Couldn't read results file");
     // let message = format!("Total Time elapased {:?}", end - now);
     let resp = Response::builder()
@@ -63,9 +51,23 @@ async fn compute(id: u16) -> Result<(), DataFusionError> {
     let config = config.with_batch_size(2048);
 
     let ctx = SessionContext::with_config(config);
+    let entries = fs::read_dir("/tmp/")?;
+    let file_names: Vec<String> = entries
+        .filter_map(|entry| {
+            let path = entry.ok()?.path();
+            if path.is_file() {
+                path.file_name()?.to_str().map(|s| s.to_owned())
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    tracing::info!("All files in temp folder {:?}", file_names);
+
     tracing::info!(
         "Does file exist src? {}",
-        Path::new("tmp/file1.parquet").is_file()
+        Path::new("/tmp/file1.parquet").is_file()
     );
     // register parquet file with the execution context
     ctx.register_parquet(
