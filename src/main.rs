@@ -51,7 +51,7 @@ async fn compute(id: u16) -> Result<(), DataFusionError> {
     let config = config.with_batch_size(2048);
 
     let ctx = SessionContext::with_config(config);
-    let entries = fs::read_dir("/tmp/")?;
+    let entries = fs::read_dir("./").expect("Couldn't read current directory");
     let file_names: Vec<String> = entries
         .filter_map(|entry| {
             let path = entry.ok()?.path();
@@ -63,19 +63,20 @@ async fn compute(id: u16) -> Result<(), DataFusionError> {
         })
         .collect();
 
-    tracing::info!("All files in temp folder {:?}", file_names);
+    tracing::info!("All files in current folder {:?}", file_names);
 
     tracing::info!(
         "Does file exist src? {}",
-        Path::new("/tmp/file1.parquet").is_file()
+        Path::new("file1.parquet").is_file()
     );
     // register parquet file with the execution context
     ctx.register_parquet(
         "ph",
-        &format!("src/file{}.parquet", id),
+        &format!("file{}.parquet", id),
         ParquetReadOptions::default(),
     )
-    .await?;
+    .await
+    .expect("Registering Parquer file failed");
 
     let load_all_data_query = "SELECT * from ph";
     let all_data = ctx.sql(load_all_data_query).await?;
