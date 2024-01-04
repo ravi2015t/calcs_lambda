@@ -34,7 +34,19 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
     // Return something that implements IntoResponse.
     // It will be serialized to the right response event automatically by the runtime
 
-    let data = fs::read_to_string("results1.json").expect("Couldn't read results file");
+    let entries = fs::read_dir("/tmp/")?;
+    let file_names: Vec<String> = entries
+        .filter_map(|entry| {
+            let path = entry.ok()?.path();
+            if path.is_file() {
+                path.file_name()?.to_str().map(|s| s.to_owned())
+            } else {
+                None
+            }
+        })
+        .collect();
+    tracing::info!("All files in temp folder {:?}", file_names);
+    let data = fs::read_to_string("/tmp/results1.json").expect("Couldn't read results file");
     // let message = format!("Total Time elapased {:?}", end - now);
     let resp = Response::builder()
         .status(200)
@@ -53,7 +65,7 @@ async fn compute(id: u16) -> Result<(), DataFusionError> {
     let ctx = SessionContext::with_config(config);
     tracing::info!(
         "Does file exist src? {}",
-        Path::new("src/file1.parquet").is_file()
+        Path::new("tmp/file1.parquet").is_file()
     );
     // register parquet file with the execution context
     ctx.register_parquet(
@@ -81,7 +93,7 @@ async fn compute(id: u16) -> Result<(), DataFusionError> {
     ctx.register_table(&table_name, Arc::new(table))?;
 
     log::info!("Registered all data to memory for task {}", id);
-    let filename = format!("results{}.json", id);
+    let filename = format!("/tmp/results{}.json", id);
     let path = Path::new(&filename);
     let file = fs::File::create(path)?;
     let mut writer = json::LineDelimitedWriter::new(file);
