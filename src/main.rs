@@ -30,7 +30,7 @@ async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
         let _ = task.await.expect("waiting failed");
     }
     let end = Instant::now();
-    println!("Total Time elapased {:?}", end - now);
+    tracing::info!("Total Time elapased {:?}", end - now);
     // Return something that implements IntoResponse.
     // It will be serialized to the right response event automatically by the runtime
 
@@ -51,6 +51,7 @@ async fn compute(id: u16) -> Result<(), DataFusionError> {
     let config = config.with_batch_size(2048);
 
     let ctx = SessionContext::with_config(config);
+    tracing::info!("Does file exist ? {}", Path::new("file1.parquet").is_file());
     // register parquet file with the execution context
     ctx.register_parquet(
         "ph",
@@ -66,7 +67,11 @@ async fn compute(id: u16) -> Result<(), DataFusionError> {
 
     let all_data = all_data.collect().await.unwrap();
 
-    log::info!("Registered all data for task {}", id);
+    tracing::info!(
+        "Registered all data for task {} vec batches length {}",
+        id,
+        all_data.len()
+    );
     let schema = all_data[0].schema(); // Assuming all batches have the same schema
 
     let table = MemTable::try_new(schema, vec![all_data])?;
@@ -134,7 +139,7 @@ async fn compute(id: u16) -> Result<(), DataFusionError> {
     // writer.finish().expect("failed to finish");
     let end = Instant::now();
     // println!("Time elapased {:?}", end - now);
-    log::info!(
+    tracing::info!(
         "Finished executing for task {} in time {:?}",
         id,
         end - start
