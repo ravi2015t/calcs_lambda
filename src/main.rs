@@ -51,7 +51,10 @@ async fn compute(id: u16) -> Result<(), DataFusionError> {
     let config = config.with_batch_size(2048);
 
     let ctx = SessionContext::with_config(config);
-    tracing::info!("Does file exist ? {}", Path::new("file1.parquet").is_file());
+    tracing::info!(
+        "Does file exist ? {}",
+        Path::new("src/file1.parquet").is_file()
+    );
     // register parquet file with the execution context
     ctx.register_parquet(
         "ph",
