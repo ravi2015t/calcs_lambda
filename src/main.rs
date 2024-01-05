@@ -95,7 +95,7 @@ async fn compute(id: u16) -> Result<(), DataFusionError> {
     let table = MemTable::try_new(schema, vec![all_data])?;
     ctx.register_table(&table_name, Arc::new(table))?;
 
-    log::info!("Registered all data to memory for task {}", id);
+    tracing::info!("Registered all data to memory for task {}", id);
     let filename = format!("/tmp/results{}.json", id);
     let path = Path::new(&filename);
     let file = fs::File::create(path)?;
@@ -148,7 +148,7 @@ async fn compute(id: u16) -> Result<(), DataFusionError> {
         query_tasks.push(task);
     }
 
-    log::info!("Finished pushing all tasks to vec for task {}", id);
+    tracing::info!("Finished pushing all tasks to vec for task {}", id);
     // tokio::join!(query_tasks);
     for task in query_tasks {
         task.await.expect("waiting failed");
